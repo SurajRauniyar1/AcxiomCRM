@@ -1,0 +1,45 @@
+
+# Build output
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# VS Code
+.vscode/
+
+# User-specific files
+*.userprefs
+
+# Secrets and environment files
+.env
+.env.*
+!.env.example
+secrets.json
+
+# ASP.NET Core
+appsettings.Development.json
+
+# Logs
+*.log
+logs/
+
+# NuGet
+*.nupkg
+**/bin/
+**/obj/
+.vs/
+.vscode/
+
+.env
+.env.*
+!.env.example
+
+**/appsettings.Development.json
+**/secrets.json
+*.user
+*.suo
+*.log

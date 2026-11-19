@@ -1,0 +1,273 @@
+
+@model IEnumerable<AcxiomCRM.Web.Models.Opportunity>
+
+@{
+    ViewData["Title"] = "Opportunity Management";
+
+    var customerNames = ViewBag.CustomerNames as Dictionary<int, string>
+        ?? new Dictionary<int, string>();
+
+    var leadNames = ViewBag.LeadNames as Dictionary<int, string>
+        ?? new Dictionary<int, string>();
+
+    var userNames = ViewBag.UserNames as Dictionary<string, string>
+        ?? new Dictionary<string, string>();
+
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 0;
+    int totalRecords = ViewBag.TotalRecords ?? 0;
+
+    decimal totalPipeline = ViewBag.TotalPipeline ?? 0m;
+    decimal weightedPipeline = ViewBag.WeightedPipeline ?? 0m;
+    decimal totalWon = ViewBag.TotalWon ?? 0m;
+}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Opportunity Management</h2>
+            <p class="text-muted">Track deals, sales stages and revenue pipeline.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary">+ Add Opportunity</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted">Open Pipeline</div>
+                    <h4 class="text-primary mt-2">@totalPipeline.ToString("C2")</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted">Weighted Pipeline</div>
+                    <h4 class="text-info mt-2">@weightedPipeline.ToString("C2")</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted">Won Sales</div>
+                    <h4 class="text-success mt-2">@totalWon.ToString("C2")</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <form asp-action="Index" method="get" class="mb-3">
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <input name="search"
+                               value="@ViewData["Search"]"
+                               class="form-control"
+                               placeholder="Search opportunity name..." />
+                    </div>
+
+                    <div class="col-md-3">
+                        <select name="stage" class="form-select">
+                            <option value="">All Stages</option>
+                            @foreach (var item in new[] { "Qualification", "Proposal", "Negotiation", "Won", "Lost" })
+                            {
+                                if ((string?)ViewData["Stage"] == item)
+                                {
+                                    <option value="@item" selected>@item</option>
+                                }
+                                else
+                                {
+                                    <option value="@item">@item</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <select name="status" class="form-select">
+                            <option value="">All Statuses</option>
+                            @foreach (var item in new[] { "Open", "Won", "Lost", "Closed" })
+                            {
+                                if ((string?)ViewData["Status"] == item)
+                                {
+                                    <option value="@item" selected>@item</option>
+                                }
+                                else
+                                {
+                                    <option value="@item">@item</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 d-flex gap-1">
+                        <button type="submit" class="btn btn-outline-primary">Search</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+                    </div>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle text-nowrap">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Opportunity</th>
+                            <th>Related To</th>
+                            <th>Amount</th>
+                            <th>Stage</th>
+                            <th>Probability</th>
+                            <th>Weighted Value</th>
+                            <th>Close Date</th>
+                            <th>Assigned To</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.OpportunityName</td>
+
+                                    <td>
+                                        @if (item.CustomerId.HasValue &&
+                                             customerNames.TryGetValue(item.CustomerId.Value, out var customerName))
+                                        {
+                                            <span>Customer: @customerName</span>
+                                        }
+                                        else if (item.LeadId.HasValue &&
+                                                 leadNames.TryGetValue(item.LeadId.Value, out var leadName))
+                                        {
+                                            <span>Lead: @leadName</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Unavailable</span>
+                                        }
+                                    </td>
+
+                                    <td>@item.Amount.ToString("C2")</td>
+                                    <td>@item.Stage</td>
+                                    <td>@item.Probability%</td>
+                                    <td>@item.WeightedValue.ToString("C2")</td>
+                                    <td>@item.ExpectedCloseDate.ToLocalTime().ToString("dd MMM yyyy")</td>
+
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.AssignedTo) &&
+                                             userNames.TryGetValue(item.AssignedTo, out var assignedName))
+                                        {
+                                            @assignedName
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Unassigned</span>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @{
+                                            var statusClass = item.Status switch
+                                            {
+                                                "Won" => "bg-success",
+                                                "Lost" => "bg-danger",
+                                                "Closed" => "bg-secondary",
+                                                _ => "bg-primary"
+                                            };
+                                        }
+                                        <span class="badge @statusClass">@item.Status</span>
+                                    </td>
+
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a asp-action="Details"
+                                               asp-route-id="@item.OpportunityId"
+                                               class="btn btn-sm btn-outline-info">Details</a>
+
+                                            <a asp-action="Edit"
+                                               asp-route-id="@item.OpportunityId"
+                                               class="btn btn-sm btn-outline-primary">Edit</a>
+
+                                            <a asp-action="Delete"
+                                               asp-route-id="@item.OpportunityId"
+                                               class="btn btn-sm btn-outline-danger">Delete</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-4">
+                                    No opportunities found.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                <span class="text-muted">
+                    Total opportunities: <strong>@totalRecords</strong>
+                    | Page @currentPage of @Math.Max(totalPages, 1)
+                </span>
+
+                @if (totalPages > 1)
+                {
+                    <nav>
+                        <ul class="pagination mb-0">
+                            <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-page="@(currentPage - 1)"
+                                   asp-route-search="@ViewData["Search"]"
+                                   asp-route-stage="@ViewData["Stage"]"
+                                   asp-route-status="@ViewData["Status"]">Previous</a>
+                            </li>
+
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                <li class="page-item @(i == currentPage ? "active" : "")">
+                                    <a class="page-link"
+                                       asp-action="Index"
+                                       asp-route-page="@i"
+                                       asp-route-search="@ViewData["Search"]"
+                                       asp-route-stage="@ViewData["Stage"]"
+                                       asp-route-status="@ViewData["Status"]">@i</a>
+                                </li>
+                            }
+
+                            <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-page="@(currentPage + 1)"
+                                   asp-route-search="@ViewData["Search"]"
+                                   asp-route-stage="@ViewData["Stage"]"
+                                   asp-route-status="@ViewData["Status"]">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            </div>
+        </div>
+    </div>
+</div>

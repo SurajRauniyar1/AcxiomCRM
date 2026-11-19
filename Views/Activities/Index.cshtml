@@ -1,0 +1,238 @@
+
+@model IEnumerable<AcxiomCRM.Web.Models.Activity>
+
+@{
+    ViewData["Title"] = "Activity Management";
+
+    var customerNames = ViewBag.CustomerNames as Dictionary<int, string>
+        ?? new Dictionary<int, string>();
+
+    var leadNames = ViewBag.LeadNames as Dictionary<int, string>
+        ?? new Dictionary<int, string>();
+
+    var userNames = ViewBag.UserNames as Dictionary<string, string>
+        ?? new Dictionary<string, string>();
+
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 0;
+    int totalRecords = ViewBag.TotalRecords ?? 0;
+}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Activity Management</h2>
+            <p class="text-muted">Manage calls, meetings, emails and tasks.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary">+ Add Activity</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <form asp-action="Index" method="get" class="mb-3">
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <input name="search"
+                               value="@ViewData["Search"]"
+                               class="form-control"
+                               placeholder="Search subject or description..." />
+                    </div>
+
+                    <div class="col-md-3">
+                        <select name="type" class="form-select">
+                            <option value="">All Activity Types</option>
+                            @foreach (var item in new[] { "Call", "Meeting", "Email", "Task" })
+                            {
+                                if ((string?)ViewData["Type"] == item)
+                                {
+                                    <option value="@item" selected>@item</option>
+                                }
+                                else
+                                {
+                                    <option value="@item">@item</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <select name="status" class="form-select">
+                            <option value="">All Statuses</option>
+                            @foreach (var item in new[] { "Planned", "In Progress", "Completed", "Cancelled" })
+                            {
+                                if ((string?)ViewData["Status"] == item)
+                                {
+                                    <option value="@item" selected>@item</option>
+                                }
+                                else
+                                {
+                                    <option value="@item">@item</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 d-flex gap-1">
+                        <button type="submit" class="btn btn-outline-primary">Search</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+                    </div>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Subject</th>
+                            <th>Related To</th>
+                            <th>Assigned To</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        @item.ActivityDate.ToLocalTime().ToString("dd MMM yyyy hh:mm tt")
+                                    </td>
+
+                                    <td>@item.ActivityType</td>
+
+                                    <td>@item.Subject</td>
+
+                                    <td>
+                                        @if (item.CustomerId.HasValue &&
+                                             customerNames.TryGetValue(item.CustomerId.Value, out var customerName))
+                                        {
+                                            <span>Customer: @customerName</span>
+                                        }
+                                        else if (item.LeadId.HasValue &&
+                                                 leadNames.TryGetValue(item.LeadId.Value, out var leadName))
+                                        {
+                                            <span>Lead: @leadName</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Unavailable</span>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.AssignedTo) &&
+                                             userNames.TryGetValue(item.AssignedTo, out var assignedName))
+                                        {
+                                            @assignedName
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Unassigned</span>
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @{
+                                            var statusClass = item.Status switch
+                                            {
+                                                "Completed" => "bg-success",
+                                                "Cancelled" => "bg-danger",
+                                                "In Progress" => "bg-info text-dark",
+                                                _ => "bg-primary"
+                                            };
+                                        }
+                                        <span class="badge @statusClass">@item.Status</span>
+                                    </td>
+
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a asp-action="Details"
+                                               asp-route-id="@item.ActivityId"
+                                               class="btn btn-sm btn-outline-info">Details</a>
+
+                                            <a asp-action="Edit"
+                                               asp-route-id="@item.ActivityId"
+                                               class="btn btn-sm btn-outline-primary">Edit</a>
+
+                                            <a asp-action="Delete"
+                                               asp-route-id="@item.ActivityId"
+                                               class="btn btn-sm btn-outline-danger">Delete</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    No activities found.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                <span class="text-muted">
+                    Total activities: <strong>@totalRecords</strong>
+                    | Page @currentPage of @Math.Max(totalPages, 1)
+                </span>
+
+                @if (totalPages > 1)
+                {
+                    <nav>
+                        <ul class="pagination mb-0">
+                            <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-page="@(currentPage - 1)"
+                                   asp-route-search="@ViewData["Search"]"
+                                   asp-route-type="@ViewData["Type"]"
+                                   asp-route-status="@ViewData["Status"]">Previous</a>
+                            </li>
+
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                <li class="page-item @(i == currentPage ? "active" : "")">
+                                    <a class="page-link"
+                                       asp-action="Index"
+                                       asp-route-page="@i"
+                                       asp-route-search="@ViewData["Search"]"
+                                       asp-route-type="@ViewData["Type"]"
+                                       asp-route-status="@ViewData["Status"]">@i</a>
+                                </li>
+                            }
+
+                            <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-page="@(currentPage + 1)"
+                                   asp-route-search="@ViewData["Search"]"
+                                   asp-route-type="@ViewData["Type"]"
+                                   asp-route-status="@ViewData["Status"]">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>

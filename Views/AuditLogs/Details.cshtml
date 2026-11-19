@@ -1,0 +1,123 @@
+
+@model AcxiomCRM.Web.Models.AuditLog
+
+@{
+    ViewData["Title"] = "Audit Log Details";
+}
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Audit Log Details</h2>
+            <p class="text-muted mb-0">
+                Complete history of this system event.
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="btn btn-outline-secondary">
+            Back to Audit Logs
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header fw-bold">
+            Event Information
+        </div>
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+                    <strong>Audit ID</strong>
+                    <p>@Model.AuditLogId</p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Action</strong>
+                    <p>
+                        <span class="badge bg-primary">
+                            @Model.Action
+                        </span>
+                    </p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Entity</strong>
+                    <p>@Model.EntityName</p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Record ID</strong>
+                    <p>@Model.RecordId</p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>User</strong>
+                    <p>@ViewBag.UserEmail</p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>IP Address</strong>
+                    <p>@(Model.IpAddress ?? "-")</p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Created Date</strong>
+                    <p>@Model.CreatedDate.ToString("dd MMM yyyy hh:mm:ss tt")</p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-bold">
+                    Previous Values
+                </div>
+
+                <div class="card-body">
+                    @if (!string.IsNullOrWhiteSpace(Model.OldValue))
+                    {
+                        <pre class="bg-light p-3 rounded text-wrap"><code>@Model.OldValue</code></pre>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">
+                            No previous values. This may be a Create operation.
+                        </p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-bold">
+                    New Values
+                </div>
+
+                <div class="card-body">
+                    @if (!string.IsNullOrWhiteSpace(Model.NewValue))
+                    {
+                        <pre class="bg-light p-3 rounded text-wrap"><code>@Model.NewValue</code></pre>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">
+                            No new values. This may be a Delete operation.
+                        </p>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>

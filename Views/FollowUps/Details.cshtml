@@ -1,0 +1,83 @@
+
+@model AcxiomCRM.Web.Models.FollowUp
+
+@{
+    ViewData["Title"] = "Follow-up Details";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Follow-up Details</h2>
+            <p class="text-muted">Complete follow-up information.</p>
+        </div>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">Back to Follow-ups</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+
+            <h5>Follow-up Information</h5>
+            <hr />
+
+            <dl class="row">
+                <dt class="col-sm-3">Follow-up ID</dt>
+                <dd class="col-sm-9">@Model.FollowUpId</dd>
+
+                <dt class="col-sm-3">Date and Time</dt>
+                <dd class="col-sm-9">
+                    @Model.FollowUpDate.ToLocalTime().ToString("dd MMM yyyy hh:mm tt")
+                </dd>
+
+                <dt class="col-sm-3">Type</dt>
+                <dd class="col-sm-9">@Model.FollowUpType</dd>
+
+                <dt class="col-sm-3">Related Customer</dt>
+                <dd class="col-sm-9">@(ViewBag.CustomerName ?? "Not linked")</dd>
+
+                <dt class="col-sm-3">Related Lead</dt>
+                <dd class="col-sm-9">@(ViewBag.LeadName ?? "Not linked")</dd>
+
+                <dt class="col-sm-3">Assigned To</dt>
+                <dd class="col-sm-9">@(ViewBag.AssignedUser ?? "Unassigned")</dd>
+
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9">
+                    <span class="badge @(Model.Status == "Completed" ? "bg-success" :
+                                          Model.Status == "Missed" ? "bg-danger" :
+                                          Model.Status == "Cancelled" ? "bg-secondary" :
+                                          "bg-primary")">
+                        @Model.Status
+                    </span>
+                </dd>
+            </dl>
+
+            <hr />
+
+            <h5>Remarks</h5>
+            <p class="mt-3">
+                @(string.IsNullOrWhiteSpace(Model.Remarks) ? "No remarks provided." : Model.Remarks)
+            </p>
+
+            <hr />
+
+            <dl class="row">
+                <dt class="col-sm-3">Created Date</dt>
+                <dd class="col-sm-9">
+                    @Model.CreatedDate.ToLocalTime().ToString("dd MMM yyyy hh:mm tt")
+                </dd>
+
+                <dt class="col-sm-3">Created By</dt>
+                <dd class="col-sm-9">@Model.CreatedBy</dd>
+            </dl>
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.FollowUpId"
+               class="btn btn-primary">Edit Follow-up</a>
+
+            <a asp-action="Index"
+               class="btn btn-outline-secondary">Back</a>
+        </div>
+    </div>
+</div>

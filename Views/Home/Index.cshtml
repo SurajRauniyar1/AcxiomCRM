@@ -1,0 +1,692 @@
+﻿
+@model AcxiomCRM.Web.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "CRM Dashboard";
+
+    var maxPipeline = Model.PipelineStages.Any()
+        ? Math.Max(1, (double)Model.PipelineStages.Max(p => p.Amount))
+        : 1;
+}
+
+<style>
+    .dashboard-card {
+        border: 0;
+        border-radius: 12px;
+        transition: transform 0.2s ease;
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .dashboard-icon {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        font-size: 21px;
+    }
+
+    .dashboard-value {
+        font-size: 27px;
+        font-weight: 700;
+    }
+
+    .dashboard-section {
+        border: 0;
+        border-radius: 12px;
+    }
+
+    .dashboard-muted {
+        color: #6c757d;
+        font-size: 13px;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 320px;
+        width: 100%;
+    }
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">CRM Dashboard</h2>
+            <p class="text-muted mb-0">
+                Welcome, @User.Identity?.Name
+            </p>
+        </div>
+
+        <div class="text-muted mt-2 mt-md-0">
+            <i class="bi bi-calendar3"></i>
+            @DateTime.Today.ToString("dddd, dd MMMM yyyy")
+        </div>
+    </div>
+
+    <!-- DASHBOARD DATE FILTERS -->
+    <div class="card dashboard-section shadow-sm mb-4">
+        <div class="card-body">
+            <form asp-controller="Home" asp-action="Index" method="get"
+                  class="row g-3 align-items-end">
+                <div class="col-12 col-md-4">
+                    <label for="startDate" class="form-label fw-semibold">
+                        Start Date
+                    </label>
+                    <input type="date"
+                           id="startDate"
+                           name="startDate"
+                           class="form-control"
+                           value="@Model.StartDate.ToString("yyyy-MM-dd")"
+                           required />
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <label for="endDate" class="form-label fw-semibold">
+                        End Date
+                    </label>
+                    <input type="date"
+                           id="endDate"
+                           name="endDate"
+                           class="form-control"
+                           value="@Model.EndDate.ToString("yyyy-MM-dd")"
+                           required />
+                </div>
+
+                <div class="col-12 col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-funnel"></i> Apply Filter
+                    </button>
+                    <a asp-controller="Home"
+                       asp-action="Index"
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                    </a>
+                </div>
+            </form>
+
+            <div class="small text-muted mt-3">
+                Showing dashboard data from
+                <strong>@Model.StartDate.ToString("dd MMM yyyy")</strong>
+                to
+                <strong>@Model.EndDate.ToString("dd MMM yyyy")</strong>.
+                Follow-up due today and overdue indicators show your current workload.
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card dashboard-card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-2">Total Customers</p>
+                            <div class="dashboard-value">@Model.TotalCustomers</div>
+                            <small class="dashboard-muted">Registered customers</small>
+                        </div>
+                        <div class="dashboard-icon bg-primary-subtle text-primary">
+                            <i class="bi bi-people"></i>
+                        </div>
+                    </div>
+                    <a asp-controller="Customers" asp-action="Index"
+                       class="small text-decoration-none d-inline-block mt-3">
+                        View Customers →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card dashboard-card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-2">Total Leads</p>
+                            <div class="dashboard-value">@Model.TotalLeads</div>
+                            <small class="dashboard-muted">
+                                @Model.ConvertedLeads converted
+                            </small>
+                        </div>
+                        <div class="dashboard-icon bg-success-subtle text-success">
+                            <i class="bi bi-person-plus"></i>
+                        </div>
+                    </div>
+                    <a asp-controller="Leads" asp-action="Index"
+                       class="small text-decoration-none d-inline-block mt-3">
+                        View Leads →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card dashboard-card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-2">Follow-ups Due Today</p>
+                            <div class="dashboard-value">@Model.FollowUpsDueToday</div>
+                            <small class="dashboard-muted">
+                                @Model.OverdueFollowUps overdue
+                            </small>
+                        </div>
+                        <div class="dashboard-icon bg-warning-subtle text-warning">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+                    </div>
+                    <a asp-controller="FollowUps" asp-action="Index"
+                       class="small text-decoration-none d-inline-block mt-3">
+                        View Follow-ups →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card dashboard-card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-2">Opportunities</p>
+                            <div class="dashboard-value">@Model.TotalOpportunities</div>
+                            <small class="dashboard-muted">
+                                @Model.WonOpportunities won
+                            </small>
+                        </div>
+                        <div class="dashboard-icon bg-info-subtle text-info">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                    </div>
+                    <a asp-controller="Opportunities" asp-action="Index"
+                       class="small text-decoration-none d-inline-block mt-3">
+                        View Opportunities →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FINANCIAL AND CONVERSION CARDS -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4">
+            <div class="card dashboard-section shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Active Pipeline Value</p>
+                    <h3 class="fw-bold text-primary">
+                        @Model.TotalPipelineValue.ToString("C")
+                    </h3>
+                    <small class="dashboard-muted">
+                        Excludes Won and Lost opportunities
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card dashboard-section shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Won Opportunity Value</p>
+                    <h3 class="fw-bold text-success">
+                        @Model.WonOpportunityValue.ToString("C")
+                    </h3>
+                    <small class="dashboard-muted">
+                        Total value of won opportunities
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card dashboard-section shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Lead Conversion Rate</p>
+                    <h3 class="fw-bold text-info">
+                        @Model.LeadConversionRate.ToString("0.##")%
+                    </h3>
+                    <div class="progress mt-3" style="height: 8px;">
+                        <div class="progress-bar bg-info"
+                             role="progressbar"
+                             style="width: @Model.LeadConversionRate%">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MONTHLY GROWTH CHART -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card dashboard-section shadow-sm">
+
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0">
+                        Monthly Customer & Lead Growth
+                    </h5>
+                    <small class="text-muted">
+                        New customers and leads over the last six months
+                    </small>
+                </div>
+
+                <div class="card-body">
+                    @if (Model.MonthlyGrowth.Any())
+                    {
+                        <div class="chart-container">
+                            <canvas id="monthlyGrowthChart"></canvas>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-5">
+                            No monthly growth data available.
+                        </div>
+                    }
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- LEAD AND OPPORTUNITY CHARTS -->
+    <div class="row g-3 mb-4">
+
+        <!-- LEAD STATUS -->
+        <div class="col-lg-6">
+            <div class="card dashboard-section shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0">
+                        Lead Status Distribution
+                    </h5>
+                </div>
+
+                <div class="card-body">
+                    @if (Model.LeadStatusDistribution.Any())
+                    {
+                        <div class="chart-container">
+                            <canvas id="leadStatusChart"></canvas>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-5">
+                            No lead data available.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- OPPORTUNITY PIPELINE -->
+        <div class="col-lg-6">
+            <div class="card dashboard-section shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0">
+                        Opportunity Pipeline Analysis
+                    </h5>
+                </div>
+
+                <div class="card-body">
+                    @if (Model.PipelineStages.Any())
+                    {
+                        <div class="chart-container">
+                            <canvas id="opportunityPipelineChart"></canvas>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-5">
+                            No opportunity data available.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- RECENT ACTIVITIES -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card dashboard-section shadow-sm">
+
+                <div class="card-header bg-white py-3 d-flex justify-content-between">
+                    <h5 class="fw-bold mb-0">Recent Activities</h5>
+
+                    <a asp-controller="Activities" asp-action="Index"
+                       class="small text-decoration-none">
+                        View All
+                    </a>
+                </div>
+
+                <div class="card-body">
+                    @if (Model.RecentActivities.Any())
+                    {
+                        @foreach (var activity in Model.RecentActivities)
+                        {
+                            <div class="d-flex justify-content-between align-items-start border-bottom py-3">
+                                <div>
+                                    <strong>@activity.Subject</strong>
+                                    <div class="dashboard-muted">
+                                        @activity.ActivityType · @activity.Status
+                                    </div>
+                                </div>
+
+                                <small class="text-muted text-end">
+                                    @activity.ActivityDate.ToString("dd MMM yyyy")
+                                    <br />
+                                    @activity.ActivityDate.ToString("hh:mm tt")
+                                </small>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-5">
+                            No recent activities found.
+                        </div>
+                    }
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN AUDIT EVENTS -->
+    @if (User.IsInRole("Admin"))
+    {
+        <div class="card dashboard-section shadow-sm mb-4">
+
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0">Recent Audit Events</h5>
+
+                <a asp-controller="AuditLogs" asp-action="Index"
+                   class="small text-decoration-none">
+                    View All
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Action</th>
+                            <th>Entity</th>
+                            <th>Record ID</th>
+                            <th>User</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (Model.RecentAuditLogs.Any())
+                        {
+                            @foreach (var log in Model.RecentAuditLogs)
+                            {
+                                var badgeClass = log.Action switch
+                                {
+                                    "Create" => "bg-success",
+                                    "Update" => "bg-primary",
+                                    "Delete" => "bg-danger",
+                                    _ => "bg-secondary"
+                                };
+
+                                <tr>
+                                    <td>
+                                        <span class="badge @badgeClass">
+                                            @log.Action
+                                        </span>
+                                    </td>
+                                    <td>@log.EntityName</td>
+                                    <td>@log.RecordId</td>
+                                    <td>@log.UserEmail</td>
+                                    <td>
+                                        @log.CreatedDate.ToString("dd MMM yyyy hh:mm tt")
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5"
+                                    class="text-center text-muted py-4">
+                                    No audit events available.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    }
+
+</div>
+
+<!-- CHART.JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // =====================================
+    // MONTHLY CUSTOMER AND LEAD GROWTH
+    // =====================================
+
+    const monthlyLabels = @Html.Raw(
+        System.Text.Json.JsonSerializer.Serialize(
+            Model.MonthlyGrowth.Select(x => x.Month)
+        )
+    );
+
+    const customerGrowth = @Html.Raw(
+        System.Text.Json.JsonSerializer.Serialize(
+            Model.MonthlyGrowth.Select(x => x.CustomerCount)
+        )
+    );
+
+    const leadGrowth = @Html.Raw(
+        System.Text.Json.JsonSerializer.Serialize(
+            Model.MonthlyGrowth.Select(x => x.LeadCount)
+        )
+    );
+
+    const monthlyElement = document.getElementById('monthlyGrowthChart');
+
+    if (monthlyElement && monthlyLabels.length > 0) {
+        new Chart(monthlyElement, {
+            type: 'line',
+
+            data: {
+                labels: monthlyLabels,
+
+                datasets: [
+                    {
+                        label: 'New Customers',
+                        data: customerGrowth,
+                        tension: 0.3,
+                        borderWidth: 3,
+                        pointRadius: 5
+                    },
+                    {
+                        label: 'New Leads',
+                        data: leadGrowth,
+                        tension: 0.3,
+                        borderWidth: 3,
+                        pointRadius: 5
+                    }
+                ]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // =====================================
+    // LEAD STATUS DISTRIBUTION
+    // =====================================
+
+    const leadLabels = @Html.Raw(
+        System.Text.Json.JsonSerializer.Serialize(
+            Model.LeadStatusDistribution.Select(x => x.Status)
+        )
+    );
+
+    const leadCounts = @Html.Raw(
+        System.Text.Json.JsonSerializer.Serialize(
+            Model.LeadStatusDistribution.Select(x => x.Count)
+        )
+    );
+
+    const leadElement = document.getElementById('leadStatusChart');
+
+    if (leadElement && leadLabels.length > 0) {
+        new Chart(leadElement, {
+            type: 'doughnut',
+
+            data: {
+                labels: leadLabels,
+                datasets: [{
+                    label: 'Number of Leads',
+                    data: leadCounts,
+                    borderWidth: 2,
+                    hoverOffset: 8
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    // =====================================
+    // OPPORTUNITY PIPELINE
+    // =====================================
+
+    const pipelineLabels = @Html.Raw(
+        System.Text.Json.JsonSerializer.Serialize(
+            Model.PipelineStages.Select(x => x.Stage)
+        )
+    );
+
+    const pipelineAmounts = @Html.Raw(
+        System.Text.Json.JsonSerializer.Serialize(
+            Model.PipelineStages.Select(x => x.Amount)
+        )
+    );
+
+    const pipelineCounts = @Html.Raw(
+        System.Text.Json.JsonSerializer.Serialize(
+            Model.PipelineStages.Select(x => x.Count)
+        )
+    );
+
+    const pipelineElement =
+        document.getElementById('opportunityPipelineChart');
+
+    if (pipelineElement && pipelineLabels.length > 0) {
+        new Chart(pipelineElement, {
+            type: 'bar',
+
+            data: {
+                labels: pipelineLabels,
+
+                datasets: [
+                    {
+                        type: 'bar',
+                        label: 'Opportunity Value',
+                        data: pipelineAmounts,
+                        yAxisID: 'y',
+                        borderWidth: 1
+                    },
+                    {
+                        type: 'line',
+                        label: 'Number of Opportunities',
+                        data: pipelineCounts,
+                        yAxisID: 'y1',
+                        tension: 0.3,
+                        borderWidth: 3,
+                        pointRadius: 5
+                    }
+                ]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Opportunity Value'
+                        }
+                    },
+
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Number of Opportunities'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
